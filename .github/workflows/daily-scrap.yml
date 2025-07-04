@@ -2,10 +2,11 @@ name: Send Leaderboard to Slack
 
 on:
   schedule:
-    - cron: '45 8 * * *' 
-  repository_dispatch: 
+    - cron: '20 18 * * *'
+  repository_dispatch:
+    types: [run-leaderboard]
   workflow_dispatch:
-    
+
 
 jobs:
   send-leaderboard:
