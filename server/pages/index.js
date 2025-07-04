@@ -233,7 +233,7 @@ const responseData ={
 ;
 
 // Reorder users: prioritized users first
-const specialUserNicks = ["GoldenSparks", "TheBrainliestUser"];
+const specialUserNicks = ["mathdude500", "TheBrainliestUser", "GoldenSparks"];
 
 const { specialUsers, otherUsers } = responseData.users_data.reduce(
   (acc, user) => {
