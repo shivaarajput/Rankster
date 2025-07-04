@@ -2,8 +2,10 @@ name: Send Leaderboard to Slack
 
 on:
   schedule:
-    - cron: '25 8 * * *'  # Every 5 minutes
+    - cron: '45 8 * * *' 
+  repository_dispatch: 
   workflow_dispatch:
+    
 
 jobs:
   send-leaderboard:
