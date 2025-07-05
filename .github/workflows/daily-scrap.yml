@@ -1,12 +1,14 @@
 name: Send Leaderboard to Slack
 
 on:
-  schedule:
-    - cron: '20 18 * * *'
   repository_dispatch:
     types: [run-leaderboard]
   workflow_dispatch:
-
+    inputs:
+      timeframe:
+        description: "Leaderboard timeframe (daily, weekly, monthly, quarterly)"
+        required: false
+        default: "daily"
 
 jobs:
   send-leaderboard:
@@ -38,9 +40,9 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-
       - name: Run Leaderboard Script
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
+          TIMEFRAME: ${{ github.event.client_payload.timeframe || inputs.timeframe || 'daily' }}
         run: node leaderboard.js

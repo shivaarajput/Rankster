@@ -12,6 +12,13 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "Missing env variables" });
   }
 
+  // Extract timeframe from Slack command (e.g., `/stat weekly`)
+  const timeframe = (req.body?.text || "").trim().toLowerCase(); // "daily", "weekly", etc.
+
+  // Optional: Validate allowed values
+  const validTimeframes = ["daily", "weekly", "monthly", "quarterly"];
+  const finalTimeframe = validTimeframes.includes(timeframe) ? timeframe : "daily";
+
   try {
     const url = `https://api.github.com/repos/${GITHUB_REPO}/dispatches`;
 
@@ -21,6 +28,7 @@ export default async function handler(req, res) {
         event_type: "run-leaderboard",
         client_payload: {
           source: "slack-bot",
+          timeframe: finalTimeframe,
         },
       },
       {
@@ -32,10 +40,10 @@ export default async function handler(req, res) {
       }
     );
 
-    console.log("✅ repository_dispatch event triggered successfully.");
+    console.log(`✅ Triggered leaderboard for "${finalTimeframe}"`);
     res.status(200).json({
       response_type: "ephemeral",
-      text: "⏳ Hang tight! The leaderboard is on its way...",
+      text: `⏳ Generating the *${finalTimeframe}* leaderboard. Hang tight!`,
     });
   } catch (err) {
     console.error("❌ Failed to trigger repository_dispatch:");
