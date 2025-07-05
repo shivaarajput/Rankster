@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     console.log("✅ repository_dispatch event triggered successfully.");
     res.status(200).json({
       response_type: "ephemeral",
-      text: "⏳ Leaderboard triggered successfully!",
+      text: "⏳ Hang tight! The leaderboard is on its way...",
     });
   } catch (err) {
     console.error("❌ Failed to trigger repository_dispatch:");
@@ -47,7 +47,7 @@ export default async function handler(req, res) {
     }
     res.status(500).json({
       response_type: "ephemeral",
-      text: "❌ Failed to trigger leaderboard. Please try again.",
+      text: "❌ Oops! Couldn't generate the leaderboard. Mind trying again?",
     });
   }
 }

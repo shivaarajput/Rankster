@@ -232,22 +232,8 @@ const responseData ={
 }
 ;
 
-// Reorder users: prioritized users first
-const specialUserNicks = ["mathdude500", "TheBrainliestUser", "GoldenSparks"];
-
-const { specialUsers, otherUsers } = responseData.users_data.reduce(
-  (acc, user) => {
-    if (specialUserNicks.includes(user.nick)) {
-      acc.specialUsers.push(user);
-    } else {
-      acc.otherUsers.push(user);
-    }
-    return acc;
-  },
-  { specialUsers: [], otherUsers: [] }
-);
-
-const finalLeaderboard = [...specialUsers, ...otherUsers];
+// Reorder users (if needed)
+const finalLeaderboard = [...responseData.users_data];
 
 // --- Leaderboard Component ---
 const Leaderboard = () => (
@@ -368,7 +354,7 @@ export default function Home() {
       <footer className="text-center text-sm text-gray-500 py-6 border-t bg-white">
         Made with ❤️ by{" "}
         <a
-          href="https://instagram.com/shivamsinghrajput"
+          href="https://instagram.com/shivamsinghamrajput"
           target="_blank"
           rel="noopener noreferrer"
           className="text-indigo-600 hover:underline"
