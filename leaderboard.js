@@ -28,8 +28,12 @@ function bufferToStream(buffer) {
 
 function getTitle(timeframe) {
   const date = new Date();
-  const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-
+  const time = date.toLocaleTimeString('en-US', {
+  timeZone: 'Asia/Kolkata',
+  hour: '2-digit',
+  minute: '2-digit',
+  });
+  
   const prettyDate = date.toLocaleDateString('en-US', {
     day: 'numeric',
     month: 'long',
