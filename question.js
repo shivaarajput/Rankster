@@ -4,9 +4,9 @@ const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 
 puppeteer.use(StealthPlugin());
 
-const SLACK_BOT_TOKEN = process.env.SLACK_BOT_TOKEN || 'xoxb-422730106544-8487359465809-5xyacBAimvzdkX1PjlidipDz';
-const SLACK_CHANNEL_ID = process.env.SLACK_CHANNEL_ID || 'CDNC9EZHR';
-const USER_ID = process.env.USER_ID || '14239290'; 
+const SLACK_BOT_TOKEN = process.env.SLACK_BOT_TOKEN;
+const SLACK_CHANNEL_ID = process.env.SLACK_CHANNEL_ID;
+const USER_ID = process.env.USER_ID || ''; 
 
 const web = new WebClient(SLACK_BOT_TOKEN);
 
@@ -19,7 +19,7 @@ async function sendMessageToSlack(channelId, message) {
 
 }
 
-function formatUnconfirmedAnswersList(responseData, userId) {
+function formatUnconfirmedAnswersList(responseData) {
   if (!responseData?.data || !Array.isArray(responseData.data)) return [];
 
   const unconfirmed = responseData.data.filter(
@@ -57,6 +57,12 @@ function formatUnconfirmedAnswersList(responseData, userId) {
 
 
 (async () => {
+    if (!USER_ID) {
+        console.warn("⚠️ USER_ID not provided. Exiting.");
+        await sendMessageToSlack(SLACK_CHANNEL_ID, "⚠️ USER_ID not provided. Exiting.");
+    return;
+  }
+
   const url = `https://brainly.in/api/28/api_responses/get_by_user?userId=${USER_ID}`;
   const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
   const page = await browser.newPage();
