@@ -3,11 +3,11 @@ import admin from "firebase-admin";
 
 // Initialize Firebase Admin SDK (once)
 if (!admin.apps.length) {
-    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-    admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-        databaseURL: process.env.FIREBASE_DATABASE_URL,
-    });
+  const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    databaseURL: process.env.FIREBASE_DATABASE_URL,
+  });
 }
 
 const db = admin.database();
@@ -17,7 +17,7 @@ export default async function handler(req, res) {
     return res.status(405).send("Only POST method is allowed");
   }
 
-  const {channel_id, command, text = "", user_id } = req.body;
+  const { channel_id, command, text = "", user_id } = req.body;
 
   if (command !== "/question") {
     return res.status(200).json({
@@ -26,53 +26,53 @@ export default async function handler(req, res) {
     });
   }
 
-  // Check if the user already has a userId in Firebase
   const userRef = db.ref(`users/${user_id}`);
-  const snapshot = await userRef.once("value");
 
-  // First-time user: prompt for userId
-  if (!snapshot.exists()) {
-    return res.status(200).json({
-      response_type: "ephemeral",
-      text: `👋 Hi! Before we proceed, please provide your User ID.
+  // If text starts with "userid=", save it first
+  if (text.toLowerCase().includes("userid=")) {
+    const providedId = text.split("userid=")[1]?.trim();
 
-            👉 Here's how to find it:
-            1. Visit your profile: https://brainly.in/users/search/YourUsername
-            2. Copy the full URL from your browser — it will look like:
-            \`https://brainly.in/profile/username-123456\`
-
-            3. Your User ID is the number at the end. For example:
-            \`123456\`
-
-            4. Now send the command like this:
-            \`/question userid=123456\`
-
-            Once saved, you won’t have to do this again. 👍`,
-
-    });
-  }
-
-  const storedUserId = snapshot.val().userId;
-
-  // If text starts with "userid=", save it
-  if (text.includes("userid")) {
-    const providedId = text.split("=")[1].trim();
-
-    if (!providedId) {
+    if (!providedId || isNaN(providedId)) {
       return res.status(200).json({
         response_type: "ephemeral",
-        text: "❌ Please provide a valid User ID. Example: `/question userid=123456`",
+        text: "❌ Please provide a valid numeric User ID. Example: `/question userid=123456`",
       });
     }
 
     await userRef.set({ userId: providedId });
+
     return res.status(200).json({
       response_type: "ephemeral",
       text: `✅ Thanks! Your User ID (${providedId}) has been saved. You can now use \`/question\`.`,
     });
   }
 
-  // Use the storedUserId instead of timeframe (example call)
+  // Now check if the user exists
+  const snapshot = await userRef.once("value");
+
+  if (!snapshot.exists()) {
+    return res.status(200).json({
+      response_type: "ephemeral",
+      text: `👋 Hi! Before we proceed, please provide your User ID.
+
+👉 Here's how to find it:
+1. Visit your profile: https://brainly.in/users/search/YourUsername  
+2. Copy the full URL from your browser — it will look like:  
+\`https://brainly.in/profile/username-123456\`  
+
+3. Your User ID is the number at the end. For example:  
+\`123456\`  
+
+4. Now send the command like this:  
+\`/question userid=123456\`  
+
+Once saved, you won’t have to do this again. 👍`,
+    });
+  }
+
+  const storedUserId = snapshot.val().userId;
+
+  // Proceed with GitHub Dispatch
   try {
     const url = `https://api.github.com/repos/${process.env.GITHUB_REPO}/dispatches`;
 
@@ -103,7 +103,7 @@ export default async function handler(req, res) {
     console.error("❌ GitHub API error:", err.message);
     res.status(500).json({
       response_type: "ephemeral",
-      text: "❌ Oops! Something went wrong.",
+      text: "❌ Oops! Something went wrong while triggering the process.",
     });
   }
 }
