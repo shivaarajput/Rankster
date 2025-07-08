@@ -36,18 +36,18 @@ export default async function handler(req, res) {
       response_type: "ephemeral",
       text: `👋 Hi! Before we proceed, please provide your User ID.
 
-                👉 Here's how to find it:
-                1. Visit your profile: https://brainly.in/users/search/YourUsername
-                2. Copy the full URL from your browser — it will look like:
-                \`https://brainly.in/profile/username-123456\`
+            👉 Here's how to find it:
+            1. Visit your profile: https://brainly.in/users/search/YourUsername
+            2. Copy the full URL from your browser — it will look like:
+            \`https://brainly.in/profile/username-123456\`
 
-                3. Your User ID is the number at the end. For example:
-                \`123456\`
+            3. Your User ID is the number at the end. For example:
+            \`123456\`
 
-                4. Now send the command like this:
-                \`/question userid=123456\`
+            4. Now send the command like this:
+            \`/question userid=123456\`
 
-                Once saved, you won’t have to do this again. 👍`,
+            Once saved, you won’t have to do this again. 👍`,
 
     });
   }
@@ -55,7 +55,7 @@ export default async function handler(req, res) {
   const storedUserId = snapshot.val().userId;
 
   // If text starts with "userid=", save it
-  if (text.startsWith("userid=")) {
+  if (text.includes("userid")) {
     const providedId = text.split("=")[1].trim();
 
     if (!providedId) {
