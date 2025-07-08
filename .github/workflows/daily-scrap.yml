@@ -1,17 +1,11 @@
-name: Send Leaderboard to Slack
+name: Send Message to Slack
 
 on:
   repository_dispatch:
-    types: [run-leaderboard]
-  workflow_dispatch:
-    inputs:
-      timeframe:
-        description: "Leaderboard timeframe (daily, weekly, monthly, quarterly)"
-        required: false
-        default: "daily"
+    types: [run-slack-message]
 
 jobs:
-  send-leaderboard:
+  send-message:
     runs-on: ubuntu-latest
 
     steps:
@@ -40,9 +34,16 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Run Leaderboard Script
+      - name: Run Appropriate Script
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
-          TIMEFRAME: ${{ github.event.client_payload.timeframe || inputs.timeframe || 'daily' }}
-        run: node leaderboard.js
+          SLACK_CHANNEL_ID: ${{ github.event.client_payload.channelId }}
+          USER_ID: ${{ github.event.client_payload.userId }}
+          TIMEFRAME: ${{ github.event.client_payload.timeframe || 'daily' }}
+        run: |
+          if [ ! -z "$USER_ID" ]; then
+            echo "Running question.js for USER_ID=$USER_ID"
+            node question.js
+          else
+            echo "Running leaderboard.js for TIMEFRAME=$TIMEFRAME"
+            node leaderboard.js

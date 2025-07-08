@@ -12,23 +12,43 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "Missing env variables" });
   }
 
-  // Extract timeframe from Slack command (e.g., `/stat weekly`)
-  const timeframe = (req.body?.text || "").trim().toLowerCase(); // "daily", "weekly", etc.
+  // ✅ Ensure the command is exactly /stats
+  const command = req.body?.command;
+  if (command !== "/stats") {
+    return res.status(200).json({
+      response_type: "ephemeral",
+      text: "❌ Invalid command. Only `/stats` is supported.",
+    });
+  }
 
-  // Optional: Validate allowed values
+  // Parse channel id
+  const channel_id = req.body?.channel_id;
+
+  // ✅ Parse and validate the argument
+  const text = (req.body?.text || "").trim().toLowerCase();
   const validTimeframes = ["daily", "weekly", "monthly", "quarterly"];
-  const finalTimeframe = validTimeframes.includes(timeframe) ? timeframe : "daily";
+
+  // Allow empty (default to "daily") or a valid timeframe
+  if (text && !validTimeframes.includes(text)) {
+    return res.status(200).json({
+      response_type: "ephemeral",
+      text: `❌ Invalid timeframe: *${text}*. Try \`/stats daily\`, \`weekly\`, \`monthly\`, or \`quarterly\`.`,
+    });
+  }
+
+  const finalTimeframe = text || "daily";
 
   try {
     const url = `https://api.github.com/repos/${GITHUB_REPO}/dispatches`;
 
-    const response = await axios.post(
+    await axios.post(
       url,
       {
-        event_type: "run-leaderboard",
+        event_type: "run-slack-message", // Unified event type
         client_payload: {
           source: "slack-bot",
           timeframe: finalTimeframe,
+          channelId: channel_id,
         },
       },
       {
