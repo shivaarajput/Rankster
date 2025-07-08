@@ -1,9 +1,9 @@
 import axios from "axios";
 import admin from "firebase-admin";
-import serviceAccount from "@/config/anonlink-d7588-firebase-adminsdk-fbsvc-81be5192f8.json";
 
 // Initialize Firebase Admin SDK (once)
 if (!admin.apps.length) {
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
     admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
         databaseURL: process.env.FIREBASE_DATABASE_URL,
