@@ -6,7 +6,7 @@ const stream = require('stream');
 puppeteer.use(StealthPlugin());
 
 const SLACK_BOT_TOKEN = process.env.SLACK_BOT_TOKEN;
-const SLACK_CHANNEL_ID = process.env.SLACK_CHANNEL_ID;
+const SLACK_CHANNEL_ID = process.env.SLACK_CHANNEL_ID || 'C058MGRKS76';
 const TIMEFRAME = process.env.TIMEFRAME || 'daily'; // daily, weekly, monthly, quarterly
 
 const web = new WebClient(SLACK_BOT_TOKEN);
