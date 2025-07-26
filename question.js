@@ -10,56 +10,87 @@ const USER_ID = process.env.USER_ID || '';
 
 const web = new WebClient(SLACK_BOT_TOKEN);
 
-async function sendMessageToSlack(channelId, message) {
+// ✅ Send all blocks in chunks (Slack limit: 50 blocks per message)
+async function sendMessageToSlack(channelId, blocksArray) {
+  const chunkSize = 45; // Slack max is 50 blocks; stay safe
+
+  for (let i = 0; i < blocksArray.length; i += chunkSize) {
+    const chunk = blocksArray.slice(i, i + chunkSize);
+
     await web.chat.postMessage({
-        channel: channelId,
-        text: '📬 Here are your unconfirmed answers.', // Required fallback
-        blocks: message,
+      channel: channelId,
+      text: '📬 Unconfirmed answers', // Required fallback
+      blocks: chunk,
     });
 
+    // Slack recommends 1 request per second
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
 }
 
+// ✅ Format unconfirmed answers into Slack-safe blocks
 function formatUnconfirmedAnswersList(responseData) {
   if (!responseData?.data || !Array.isArray(responseData.data)) return [];
 
   const unconfirmed = responseData.data.filter(
     entry => entry.is_confirmed === false
   );
+
   if (unconfirmed.length === 0) {
     return [
       {
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: `No unconfirmed answers found.`,
+          text: `✅ No unconfirmed answers found.`,
         },
       },
     ];
   }
 
-  const lines = unconfirmed.map((entry, index) => {
-    const number = String(index + 1).padStart(2, '0'); // Makes 01, 02, etc.
-    return `${number}. https://brainly.in/question/${entry.question_id}`;
+  const blocks = [];
+  let currentText = '';
+
+  unconfirmed.forEach((entry, index) => {
+    const line = `${String(index + 1).padStart(2, '0')}. https://brainly.in/question/${entry.question_id}`;
+
+    if ((currentText + '\n\n' + line).length > 2900) {
+      blocks.push({
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: currentText,
+        },
+      });
+      currentText = line;
+    } else {
+      currentText += (currentText ? '\n\n' : '') + line;
+    }
   });
 
-  return [
-    {
+  if (currentText) {
+    blocks.push({
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: `${lines.join('\n\n')}`,
+        text: currentText,
       },
-    },
-  ];
+    });
+  }
+
+  return blocks;
 }
 
-
-
-
+// ✅ Main function
 (async () => {
-    if (!USER_ID) {
-        console.warn("⚠️ USER_ID not provided. Exiting.");
-        await sendMessageToSlack(SLACK_CHANNEL_ID, "⚠️ USER_ID not provided. Exiting.");
+  if (!USER_ID) {
+    console.warn("⚠️ USER_ID not provided. Exiting.");
+    await sendMessageToSlack(SLACK_CHANNEL_ID, [
+      {
+        type: 'section',
+        text: { type: 'mrkdwn', text: "⚠️ USER_ID not provided. Exiting." }
+      }
+    ]);
     return;
   }
 
@@ -73,7 +104,6 @@ function formatUnconfirmedAnswersList(responseData) {
   let json;
   try {
     json = JSON.parse(bodyText);
-    // console.log(json.data)
   } catch (e) {
     console.error("❌ Failed to parse JSON:", e);
     await browser.close();
@@ -82,6 +112,6 @@ function formatUnconfirmedAnswersList(responseData) {
 
   await browser.close();
 
-  const questions = formatUnconfirmedAnswersList(json, USER_ID);
+  const questions = formatUnconfirmedAnswersList(json);
   await sendMessageToSlack(SLACK_CHANNEL_ID, questions);
 })();
